@@ -1,0 +1,2 @@
+Pidgin-Plugins
+==============
