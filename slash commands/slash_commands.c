@@ -50,20 +50,15 @@
 
 static PurplePlugin *slash_commands = NULL;
 
-static PurpleCmdId away_command_id, dnd_command_id, online_command_id;
+static PurpleCmdId away_command_id, dnd_command_id, online_command_id; 
+/**
+ * Used to hold a handle to the commands we register. Holding this handle
+ * allows us to unregister the commands at a later time. 
+ */
 
 static PurpleCmdRet 
-away_cb(PurpleConversation *conv, const gchar *cmd, gchar **args, gchar **error, void *data)
+away_cb(PurpleConversation *conv, const gchar *cmd, gchar **args, gchar **error, void *data) /* away command call-back function */
 {
-
-  /*if(args[0]){
-  	purple_savedstatus_set_message(purple_savedstatus_get_idleaway(),args[0]);
-  }
-  
-  purple_savedstatus_set_idleaway(TRUE);
-
-  return PURPLE_CMD_RET_OK;
-	*/
 
 PurpleSavedStatus *away = NULL;
   
@@ -99,7 +94,7 @@ PurpleSavedStatus *away = NULL;
 }
 
 static PurpleCmdRet 
-dnd_cb(PurpleConversation *conv, const gchar *cmd, gchar **args, gchar **error, void *data)
+dnd_cb(PurpleConversation *conv, const gchar *cmd, gchar **args, gchar **error, void *data) /* dnd command call-back function */
 {
   PurpleSavedStatus *dnd = NULL;
   
@@ -139,51 +134,43 @@ dnd_cb(PurpleConversation *conv, const gchar *cmd, gchar **args, gchar **error, 
 }
 
 static PurpleCmdRet 
-online_cb(PurpleConversation *conv, const gchar *cmd, gchar **args, gchar **error, void *data)
+online_cb(PurpleConversation *conv, const gchar *cmd, gchar **args, gchar **error, void *data) /* online command call-back function */
 {
-  
-  /*if(args[0]){
-  	purple_savedstatus_set_message(purple_savedstatus_get_default(),args[0]);
-  }
-  purple_savedstatus_set_idleaway(FALSE);
 
-  return PURPLE_CMD_RET_OK;
-*/
+PurpleSavedStatus *online = NULL; /* creates a new saved status pointer*/
 
-PurpleSavedStatus *online = NULL;
-
-  if(purple_savedstatus_is_idleaway()){
-  	purple_savedstatus_set_idleaway(FALSE);
+  if(purple_savedstatus_is_idleaway()){   /* checks if current status is idle-away*/
+  	purple_savedstatus_set_idleaway(FALSE);  /* deactivates the idle-away status - not necessary but sometimes problem occurs*/
   }  
   
-  if(args[0]){
+  if(args[0]){  /* checks if arguments are passed in the comment*/
   
-	  if(purple_savedstatus_get_type(purple_savedstatus_find(args[0]))==PURPLE_STATUS_AVAILABLE){
-		online = purple_savedstatus_find(args[0]);
-		}
+	  if(purple_savedstatus_get_type(purple_savedstatus_find(args[0]))==PURPLE_STATUS_AVAILABLE){ /*checks if status exists */
+		online = purple_savedstatus_find(args[0]); /*assigns the existing status to the pointer */
+		} 
 		
 	  else   {
-	  	online = purple_savedstatus_new(args[0], PURPLE_STATUS_AVAILABLE);
+	  	online = purple_savedstatus_new(args[0], PURPLE_STATUS_AVAILABLE); /* creates new saved status and assigns it to the pointer */
 	  	}
 	  	
 	}
 	
   else {
-	  online = purple_savedstatus_find("Available");
+	  online = purple_savedstatus_find("Available"); /* finds default saved status with the given title */
   
 	  if(online){
 	  	 if(purple_savedstatus_get_type(online)!=PURPLE_STATUS_AVAILABLE){
-	  	 	online = purple_savedstatus_new(NULL, PURPLE_STATUS_AVAILABLE);
+	  	 	online = purple_savedstatus_new(NULL, PURPLE_STATUS_AVAILABLE); /* if status is not of required type, create new*/
   			}
   		}
 
-  	  else online = purple_savedstatus_new(NULL, PURPLE_STATUS_AVAILABLE);
+  	  else online = purple_savedstatus_new(NULL, PURPLE_STATUS_AVAILABLE); /* if status doesn't exist, create new */
   
   	  	}
   
 
-  purple_savedstatus_activate(online);
-  return PURPLE_CMD_RET_OK;
+  purple_savedstatus_activate(online); /*activates the saved status */
+  return PURPLE_CMD_RET_OK; /* return if command executed successfully */
 
 }
 
@@ -191,7 +178,15 @@ PurpleSavedStatus *online = NULL;
 static gboolean
 plugin_load(PurplePlugin *plugin)
 {
-	slash_commands = plugin;
+	gchar *away_help =NULL; /* Declare all vars up front. Avoids warnings on some compilers */
+	gchar *dnd_help =NULL;
+	gchar *online_help =NULL;
+	
+	slash_commands = plugin;  /* Save a handle to ourself for later */
+	
+	away_help = "away &lt;title&gt;:  Sets your status as away with the title(optional).";
+	dnd_help = "dnd &lt;title&gt;:  Sets your status as unvailable with the title(optional).";
+	online_help = "online &lt;title&gt;:  Sets your status as available with the title(optional)";
 	
 	away_command_id = purple_cmd_register 
     ("away",                         /* command name */ 
@@ -200,7 +195,7 @@ plugin_load(PurplePlugin *plugin)
      PURPLE_CMD_FLAG_IM | PURPLE_CMD_FLAG_ALLOW_WRONG_ARGS,            /* command usage flags */
      PLUGIN_ID,                     /* Plugin ID */
      away_cb,                        /* Name of the callback function */
-     NULL,                      /* Help message */
+     away_help,                      /* Help message */
      NULL                           /* Any special user-defined data */
      );
      
@@ -211,7 +206,7 @@ plugin_load(PurplePlugin *plugin)
      PURPLE_CMD_FLAG_IM | PURPLE_CMD_FLAG_ALLOW_WRONG_ARGS,            /* command usage flags */ 
      PLUGIN_ID,                     /* Plugin ID */
      dnd_cb,                        /* Name of the callback function */
-     NULL,                      /* Help message */
+     dnd_help,                      /* Help message */
      NULL                           /* Any special user-defined data */
      );
      
@@ -222,7 +217,7 @@ plugin_load(PurplePlugin *plugin)
      PURPLE_CMD_FLAG_IM | PURPLE_CMD_FLAG_ALLOW_WRONG_ARGS,            /* command usage flags */
      PLUGIN_ID,                     /* Plugin ID */
      online_cb,                        /* Name of the callback function */
-     NULL,                      /* Help message */
+     online_help,                      /* Help message */
      NULL                           /* Any special user-defined data */
      );
      
@@ -235,9 +230,9 @@ static gboolean
 plugin_unload(PurplePlugin *plugin)
 {
 
-  purple_cmd_unregister(away_command_id);
-  purple_cmd_unregister(dnd_command_id);
-  purple_cmd_unregister(online_command_id);
+  purple_cmd_unregister(away_command_id); /* unregister the away command */
+  purple_cmd_unregister(dnd_command_id); /* unregister the dnd command */
+  purple_cmd_unregister(online_command_id); /* unregister the online command */
 
   /* Just return true to tell libpurple to finish unloading. */
   return TRUE;
@@ -257,7 +252,7 @@ static PurplePluginInfo info = {
         "Slash Commands",        							/* name */
         "1.0",                      						/* version */
         "Enables slash commands to alter your status",    	/* summary */
-        "Pre-defined slash commands alter your status",  	/* description */
+        "/away <message>, /online <message>, /dnd <message>, <message> is optional",  	/* description */
         PLUGIN_AUTHOR,              						/* author */
         "http://mssuraj.wordpress.com",         			/* homepage */
 
